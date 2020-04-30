@@ -41,7 +41,7 @@ library(tidyr)
 
 # 3. Functions ===============================================================================
 
-# 3.X Data loading functions =================================================================
+# 3.1 Data loading functions =================================================================
 get.SR15.meta <- function() {
   # Get SR15 metadata for merge with output df
   
@@ -90,7 +90,7 @@ get.ETP.data <- function() {
   return(etp_data0)
 }
 
-# 3.X Gap-filler functions ===================================================================
+# 3.2 Gap-filler functions ===================================================================
 interp.all <- function(df, id.cols=5, cdata_yrs_out=FALSE) {
   # Returns a dataframe with one column per year between 2000 and 2100
   # Where data is interpolated linearly based on spacing of available
@@ -210,7 +210,7 @@ calculate.intensity.vars <- function(df) {
   
 }
 
-# 3.X New meta-data ==========================================================================
+# 3.3 New meta-data ==========================================================================
 calculate.new.meta <- function(df, slope_vars, slope_year_pairs) {
   
   df[, c("cdr|cumulative")] <- NA
@@ -246,7 +246,7 @@ calculate.new.meta <- function(df, slope_vars, slope_year_pairs) {
   return(df)
 }
 
-# 3.X Utility functions ======================================================================
+# 3.4 Utility functions ======================================================================
 generate.varnames <- function(var0, subvars, include.var0=TRUE) {
   # Returns a vector of IPCC SR15 variables from a nested category
   # Args
@@ -271,19 +271,19 @@ null.result <- flog.threshold(DEBUG, name="ROOT")
 
 #___4.2 Variable lists =======================================================================
 
-#___4.2.4 Emissions variables to include in output dataframe =================================
+#___4.2.1 Emissions variables to include in output dataframe =================================
 em0 <- 'Emissions|CO2'
 em_subs <- c('Energy and Industrial Processes', 'Energy', 'Industrial Processes',
              'Energy|Supply', 'Energy|Demand', 'Energy|Demand|Industry', 'Energy|Demand|Transportation',
              'Energy|Supply|Electricity', 'AFOLU')
 
-#___4.2.5 Carbon seq variables to include in output dataframe ================================
+#___4.2.2 Carbon seq variables to include in output dataframe ================================
 cs0 <- 'Carbon Sequestration'
 cs_subs <- c('CCS|Biomass', 'CCS|Biomass|Energy', 'CCS|Biomass|Energy|Supply',
              'CCS|Biomass|Energy|Supply|Electricity', 'CCS|Fossil', 'Land Use',
              'Feedstocks', 'Direct Air Capture', 'Enhanced Weathering', 'Other')
 
-#___4.2.6 Any variables still missing ========================================================
+#___4.2.3 Any variables still missing ========================================================
 other_vars <- c('Primary Energy', 'Secondary Energy|Electricity',
                 'Emissions|Kyoto Gases', 'Emissions|CH4|AFOLU', 'Emissions|N2O|AFOLU', 'Price|Carbon',
                 'Carbon Sequestration|CCS|Biomass|Energy|Supply|Electricity', 'GDP|PPP')

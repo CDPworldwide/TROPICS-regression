@@ -373,8 +373,8 @@ slope_byr <- 2020
 slope_yrf_all <-seq(2025, 2050, 5)
 
 # Slopes calculated linearly and compound, generate column names
-slope_colsLinear <- paste0('slope', sapply(slope_yrf_all, function(X) X-yr0))
-slope_colsCA <- paste0('slopeCA', sapply(slope_yrf_all, function(X) X-yr0))
+slope_colsLinear <- paste0('slope', sapply(slope_yrf_all, function(X) X-slope_byr))
+slope_colsCA <- paste0('slopeCA', sapply(slope_yrf_all, function(X) X-slope_byr))
 all_slope_cols <- list(slope_colsLinear, slope_colsCA)
 
 sr15_var_long[, unlist(all_slope_cols)] <- NA

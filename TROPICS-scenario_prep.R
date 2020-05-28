@@ -351,13 +351,14 @@ sr15_out <- (interp_data
                 %>% calculate.CDR()
                 %>% calculate.intensity.vars())
 
-sr15_meta <- (sr15_out
+sr15_meta0 <- get.SR15.meta()
+sr15_new_meta <- (sr15_out
               %>% calculate.new.meta())
-meta_cols_new <- colnames(sr15_meta)[!colnames(sr15_meta) %in% colnames(sr15_out)]
-sr15_meta <- (sr15_meta
+meta_cols_new <- colnames(sr15_new_meta)[!colnames(sr15_new_meta) %in% colnames(sr15_out)]
+sr15_meta <- (sr15_new_meta
               %>% select(c('Model-Scenario', meta_cols_new))
               %>% unique()
-              %>% merge(meta, by='Model-Scenario'))
+              %>% merge(sr15_meta0, by='Model-Scenario'))
 
 #____4.5 Calculate slopes of each variable and transform to Chris specs ======================
 keep_years <- seq(2020, 2050, 5)

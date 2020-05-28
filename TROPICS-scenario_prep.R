@@ -22,10 +22,12 @@
 #1. Preamble =================================================================================
 
 # SR15 database fpaths
-f_sr15 <- 'input/scenarios/sr15/sr15_r1_1/iamc15_scenario_data_world_r1.1.xlsx'
-f_sr15_all_regions <- 'input/scenarios/sr15/sr15_r1_1/iamc15_scenario_data_all_regions_r1.1.xlsx'
-f_sr15_meta <- 'input/scenarios/sr15/sr15_r1_1/sr15_metadata_indicators_r1.1.xlsx'
-f_etp <- 'input/scenarios/etp/2017/excel_edited/ETP2017_industry_summary_2.xlsx'
+f_sr15 <- 'input/iamc15_scenario_data_world_r2.0.xlsx'
+f_sr15_meta <- 'input/sr15_r1_1/sr15_metadata_indicators_r2.0.xlsx'
+# f_sr15_all_regions <- 'input/iamc15_scenario_data_all_regions_r2.0.xlsx'
+# f_etp <- 'input/ETP2017_industry_summary_2.xlsx'
+use_etp <- FALSE
+write_csvs <- FALSE
 
 # 2. Library =================================================================================
 library(plyr)
@@ -192,22 +194,28 @@ calculate.CDR <- function(df) {
   return(df)
 }
 
-calculate.intensity.vars <- function(df) {
+calculate.intensity.vars <- function(df, use_etp) {
   
-  mutate(df,
-         INT.emKyoto_gdp=`Emissions|Kyoto Gases`/`GDP|PPP`,
-         INT.emCO2EI_PE=`Emissions|CO2|Energy and Industrial Processes`/`Primary Energy`,
-         INT.emCO2EI_cement = `Emissions|CO2|Energy and Industrial Processes`/`Cement`,
-         INT.emCO2IndDemand_cement = `Emissions|CO2|Energy|Demand|Industry`/`Cement`,
-         INT.emCO2EI_steel = `Emissions|CO2|Energy and Industrial Processes`/`Crude steel`,
-         INT.emCO2IndDemand_steel = `Emissions|CO2|Energy|Demand|Industry`/`Crude steel`,
-         INT.emCO2EI_aluminum = `Emissions|CO2|Energy and Industrial Processes`/`Total aluminium (primary and secondary)`,
-         INT.emCO2IndDemand_aluminum = `Emissions|CO2|Energy|Demand|Industry`/`Total aluminium (primary and secondary)`,
-         INT.emCO2Elec_elecGen = `Emissions|CO2|Energy|Supply|Electricity`/`Secondary Energy|Electricity`,
-         INT.emCO2EI_elecGen = `Emissions|CO2|Energy and Industrial Processes`/`Secondary Energy|Electricity`,
-         INT.emCO2Transport_gdp = `Emissions|CO2|Energy|Demand|Transportation`/`GDP|PPP`
-  )
+  df_out <- (df %>% mutate(
+    INT.emKyoto_gdp=`Emissions|Kyoto Gases`/`GDP|PPP`,
+    INT.emCO2EI_PE=`Emissions|CO2|Energy and Industrial Processes`/`Primary Energy`,
+    INT.emCO2Elec_elecGen = `Emissions|CO2|Energy|Supply|Electricity`/`Secondary Energy|Electricity`,
+    INT.emCO2EI_elecGen = `Emissions|CO2|Energy and Industrial Processes`/`Secondary Energy|Electricity`,
+    INT.emCO2Transport_gdp = `Emissions|CO2|Energy|Demand|Transportation`/`GDP|PPP`
+  ))
   
+  if(use_etp) {
+    df_out <- (df_out %>% mutate(
+      INT.emCO2EI_cement = `Emissions|CO2|Energy and Industrial Processes`/`Cement`,
+      INT.emCO2IndDemand_cement = `Emissions|CO2|Energy|Demand|Industry`/`Cement`,
+      INT.emCO2EI_steel = `Emissions|CO2|Energy and Industrial Processes`/`Crude steel`,
+      INT.emCO2IndDemand_steel = `Emissions|CO2|Energy|Demand|Industry`/`Crude steel`,
+      INT.emCO2EI_aluminum = `Emissions|CO2|Energy and Industrial Processes`/`Total aluminium (primary and secondary)`,
+      INT.emCO2IndDemand_aluminum = `Emissions|CO2|Energy|Demand|Industry`/`Total aluminium (primary and secondary)`
+    ))
+  }
+
+  return(df_out)
 }
 
 # 3.3 New meta-data ==========================================================================
@@ -323,33 +331,40 @@ interp_sr15_data <- (ss0 %>% interp.all(id.cols=5) %>%
     )
 
 # Get ETP data, interpolate, and transform to same structure as SR15
-flog.debug('Pulling ETP data')
-interp_etp_data <- (get.ETP.data()
-               %>% interp.all(id.cols=1)
-               %>% melt(id.vars='Variable', variable.name = 'Year')
-               %>% dcast(Year ~ Variable)
-               %>% mutate(
-                 `Model-Scenario`='ETP-2DS',
-                 `Model`='ETP',
-                 `Scenario`='2DS',
-                 Year = as.numeric(as.character(Year))
-               )
-               %>% select(c((ncol(.)-2):ncol(.), 1:(ncol(.)-2)))
-               %>% rename(Cement = 'Cement ')
-               %>% arrange(Year))
 
-# Now merge them. We are dropping "Model-Scenario" from the ETP dataframe because
-# it is being combined with SR15 scenario data to estimate intensity of certain
-# industrial sectors
+if(use_etp) {
+  flog.debug('Pulling ETP data')
+  interp_etp_data <- (get.ETP.data()
+                      %>% interp.all(id.cols=1)
+                      %>% melt(id.vars='Variable', variable.name = 'Year')
+                      %>% dcast(Year ~ Variable)
+                      %>% mutate(
+                        `Model-Scenario`='ETP-2DS',
+                        `Model`='ETP',
+                        `Scenario`='2DS',
+                        Year = as.numeric(as.character(Year))
+                      )
+                      %>% select(c((ncol(.)-2):ncol(.), 1:(ncol(.)-2)))
+                      %>% rename(Cement = 'Cement ')
+                      %>% arrange(Year))
 
-interp_data <- (interp_sr15_data
-                %>% merge(interp_etp_data[, -c(1:3)], by='Year'))
+  # Now merge them. We are dropping "Model-Scenario" from the ETP dataframe because
+  # it is being combined with SR15 scenario data to estimate intensity of certain
+  # industrial sectors
+  
+  interp_data <- (interp_sr15_data
+                  %>% merge(interp_etp_data[, -c(1:3)], by='Year'))
+  
+} else {
+  interp_data <- (interp_sr15_data)
+}
+
 
 flog.debug('Calculating new vars')
 sr15_out <- (interp_data
                 %>% calculate.AFOLU.cs()
                 %>% calculate.CDR()
-                %>% calculate.intensity.vars())
+                %>% calculate.intensity.vars(use_etp))
 
 sr15_meta0 <- get.SR15.meta()
 sr15_new_meta <- (sr15_out
@@ -468,7 +483,9 @@ for(pi in which_peak_var){
           names(filtered_dfs)[counter] <- set_name
           # print(length(unique(filtered_dfi$`Model-Scenario`)))
           nscenariosv[counter] <- length(unique(filtered_dfi$`Model-Scenario`))
-          write_excel_csv(filtered_dfi, path=paste0('TROPICS-scenario_data_csv/TROPICS_dataset-', counter, '.csv'))
+          if(write_csvs) {
+            write_excel_csv(filtered_dfi, path=paste0('TROPICS-scenario_data_csv/TROPICS_dataset-', counter, '.csv')) 
+          }
         }
       }   
     }

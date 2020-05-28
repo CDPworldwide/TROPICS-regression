@@ -23,11 +23,15 @@
 
 # SR15 database fpaths
 f_sr15 <- 'input/iamc15_scenario_data_world_r2.0.xlsx'
-f_sr15_meta <- 'input/sr15_r1_1/sr15_metadata_indicators_r2.0.xlsx'
+f_sr15_meta <- 'input/sr15_metadata_indicators_r2.0.xlsx'
 # f_sr15_all_regions <- 'input/iamc15_scenario_data_all_regions_r2.0.xlsx'
-# f_etp <- 'input/ETP2017_industry_summary_2.xlsx'
+
+# By default, ETP data is not used; but if a data path is provided and use_etp is set to TRUE,
+# ETP data is combined with SR15 data to calculate a few intensity indicators currently under
+# testing
+f_etp <- 'input/ETP2017_industry_summary.xlsx'
 use_etp <- FALSE
-write_csvs <- FALSE
+write_csvs <- TRUE
 
 # 2. Library =================================================================================
 library(plyr)
@@ -495,7 +499,9 @@ for(pi in which_peak_var){
 mapping <- cbind(names(filtered_dfs), peak_yrv, peak_varv, appliedv, cdr_limv,
                  cdr_varv, nscenariosv, seq(1, length(filtered_dfs)))
 
-write.xlsx(mapping, 'TROPICS_dataset_mapping.xlsx')
+if(write_csvs) {
+  write.xlsx(mapping, 'TROPICS-scenario_data_csv/TROPICS_dataset_mapping.xlsx')
+}
 
 
 

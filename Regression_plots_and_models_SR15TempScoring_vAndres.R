@@ -17,7 +17,7 @@ library(openxlsx)
 library(magrittr)
 
 # filepath to TROPICS data sets
-f_datamap <- '/Users/weber/OneDrive - World Wildlife Fund/1.5stuff/SR15_Scenarios/TROPICS/TROPICS_dataset_mapping.xlsx'
+f_datamap <- 'TROPICS-scenario_data_csv/TROPICS_dataset_mapping.xlsx'
 
 #Load data output from 200406_scenario_filter_TROPICS.R
 datamapping <-  (read.xlsx(f_datamap, sheet='deduplicated'))
@@ -30,21 +30,21 @@ regoutputfinal <- data.frame(samplesize = numeric(1),model = character(1),variab
 for (counter in 1:nrow(datamapping)) {
 
 #read in scenario data
-scens <- read.csv(paste("TROPICS_dataset-",as.character(datamapping$V8[counter]),".csv",sep=""),stringsAsFactors=FALSE,strip.white=TRUE)
+scens <- read.csv(paste("TROPICS-scenario_data_csv/TROPICS_dataset-",as.character(datamapping$V8[counter]),".csv",sep=""),stringsAsFactors=FALSE,strip.white=TRUE)
 
 
 ##########Process scenario data and make diagnostic plots
 #add model family variable
-models <- read.csv("/Users/weber/OneDrive - World Wildlife Fund/1.5stuff/SR15_Scenarios/models.csv")
+models <- read.csv("input/models.csv")
 scens <- merge(scens,models,by = "Model")
 
 #remove baseline scenarios, as they should not take part in modeling of mitigation targets
-baselines <- read.csv("/Users/weber/OneDrive - World Wildlife Fund/1.5stuff/SR15_Scenarios/baselines.csv")
+baselines <- read.csv("input/baselines.csv")
 scens <- scens[!scens$Scenario %in% baselines$baseline,]
 names(scens)[2] <- "concscen2"
 
 #add 2100 66% MAGICC scores
-temp66 <- read.csv("/Users/weber/OneDrive - World Wildlife Fund/1.5stuff/SR15_Scenarios/temp66.csv")
+temp66 <- read.csv("input/temp66.csv")
 names(temp66)[2] <- "Warm2100MAG66"
 scens <- merge(scens,temp66,by = "concscen2",all.x=TRUE,all.y=FALSE)
   
@@ -112,6 +112,7 @@ for(i in 1:length(benchdownsub)){
 dev.off()
 
 
+aak
 ###########Part 3: Create and store regression models 
 
 #initialize regression lists
